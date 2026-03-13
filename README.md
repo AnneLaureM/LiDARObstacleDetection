@@ -1,4 +1,4 @@
-# README.md (CVPR / Kaggle style)
+# README.md
 
 ```markdown
 # Airbus LiDAR Obstacle Detection
