@@ -1,309 +1,373 @@
-# README.md
+# README.md (CVPR / Kaggle style)
 
 ```markdown
 # Airbus LiDAR Obstacle Detection
-Hybrid Geometry + Lightweight Learning Pipeline
+Hybrid Geometry + Lightweight Learning for Sparse Aerial LiDAR
 
-## Overview
-
-This repository implements a **LiDAR obstacle detection system** designed for the Airbus AI Challenge.
-
-The goal is to detect aerial infrastructure obstacles from airborne LiDAR point clouds and output **3D bounding boxes** for the following classes:
-
-- Antenna
-- Cable
-- Electric Pole
-- Wind Turbine
-
-The solution combines:
-
-• **Geometry-based object detection (primary approach)**  
-• **Lightweight neural point segmentation (experimental)**  
-• **Density robustness evaluation**  
-• **Visualization tools for qualitative analysis**
-
-The final submission strategy is:
-
-| Component | Purpose |
-|--------|--------|
-| V5 heuristic detector | Final prediction CSVs |
-| V6 detector | Visual screenshots |
-| Small segmentation model | Experimental learning pipeline |
-| Proxy evaluation | Internal performance analysis |
-
-The geometry-first approach was chosen because:
-
-- the dataset is small
-- objects have strong geometric structure
-- cables are difficult for deep models but easy with geometric constraints
+Author: [Your Name]  
+Challenge: Airbus AI Challenge — LiDAR Obstacle Detection
 
 ---
 
-# Repository Structure
+# 1. Problem
+
+Airborne LiDAR must detect infrastructure obstacles that can threaten aerial vehicles.
+
+Target objects:
+
+| Class | Description |
+|------|-------------|
+| Antenna | Vertical communication towers |
+| Cable | Thin power or communication lines |
+| Electric Pole | Vertical pole infrastructure |
+| Wind Turbine | Large wind turbine structures |
+
+The input consists of **sparse LiDAR point clouds** stored in `.h5` files.
+
+The output is **3D bounding boxes** for each detected object.
+
+---
+
+# 2. Solution Overview
+
+We propose a **hybrid pipeline** combining:
+
+- Geometry-based object detection
+- PCA-based cable detection
+- Density-robust clustering
+- Lightweight point segmentation model (optional)
+
+The main insight is that **infrastructure objects have strong geometric signatures**.
+
+This allows reliable detection even under **extreme LiDAR sparsity**.
+
+---
+
+# 3. Pipeline
 
 ```
 
-airbus_lidar_solution/
-├── README.md
-├── requirements.txt
-├── lidar_utils.py
-├── models/
-│ └── best_model.pt
-├── training/
-│ ├── export_dataset_for_segmentation.py
-│ ├── train_small_point_model.py
-│ ├── evaluate_map_proxy.py
-│ └── batch_evaluate_train.py
-├── inference/
-│ ├── train_and_infer_baseline_v5.py
-│ ├── train_and_infer_baseline_v6.py
-│ └── infer_small_point_model.py
-├── visualization/
-│ └── visualize_predictions_v2.py
-├── predictions/
-│ ├── sceneA_100.csv
-│ ├── sceneA_75.csv
-│ ├── sceneA_50.csv
-│ ├── sceneA_25.csv
-│ ├── sceneB_100.csv
-│ ├── sceneB_75.csv
-│ ├── sceneB_50.csv
-│ └── sceneB_25.csv
-├── screenshots/
-│ ├── frame_01.png
-│ ├── ...
-│ └── frame_10.png
-└── docs/
-├── technical_summary.docx
-└── one_pager.pdf
+Raw LiDAR (.h5)
+│
+▼
+Spherical → Cartesian conversion
+│
+▼
+Frame extraction (ego poses)
+│
+▼
+Point filtering & downsampling
+│
+▼
+Geometry-based clustering (DBSCAN)
+│
+▼
+Class-specific detection
+│
+├── Cable detection via PCA line fitting
+├── Antenna detection via verticality filters
+├── Pole detection via vertical cylinder detection
+└── Wind turbine detection via large clusters
+│
+▼
+Bounding box estimation
+│
+▼
+CSV export
 
-````
+```
+
+Optional branch:
+
+```
+
+Pseudo labels
+│
+▼
+Point segmentation model
+│
+▼
+Neural inference
+│
+▼
+Post-processing
+│
+▼
+Bounding boxes
+
+```
 
 ---
 
-# Installation
+# 4. Repository Structure
 
-Create a Python environment and install dependencies.
+```
 
-```bash
+LiDARObstacleDetection/
+
+README.md
+requirements.txt
+lidar_utils.py
+
+training/
+export_dataset_for_segmentation.py
+train_small_point_model.py
+evaluate_map_proxy.py
+batch_evaluate_train.py
+
+inference/
+train_and_infer_baseline_v5.py
+train_and_infer_baseline_v6.py
+infer_small_point_model.py
+
+visualization/
+visualize_predictions_v2.py
+
+models/
+best_model.pt
+
+screenshots/
+
+predictions/
+
+```
+
+---
+
+# 5. Installation
+
+Install dependencies:
+
+```
+
 pip install -r requirements.txt
-````
+
+```
 
 ---
 
-# Dataset Layout
+# 6. Python Path Configuration
 
-The training dataset must follow this structure:
+Some scripts import `lidar_utils.py` from the project root.
+
+Run once per terminal session:
 
 ```
+
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+
+```
+
+Verify:
+
+```
+
+python -c "import lidar_utils; print('OK')"
+
+```
+
+Expected output:
+
+```
+
+OK
+
+```
+
+---
+
+# 7. Dataset Layout
+
+```
+
 airbus_hackathon_trainingdata/
-├── scene_1.h5
-├── scene_2.h5
-├── scene_3.h5
-├── scene_4.h5
-├── scene_5.h5
-├── scene_6.h5
-├── scene_7.h5
-├── scene_8.h5
-├── scene_9.h5
-└── scene_10.h5
-```
 
-Each file contains LiDAR points with:
+scene_1.h5
+scene_2.h5
+...
+scene_10.h5
 
 ```
+
+Each `.h5` contains LiDAR points with:
+
+```
+
 distance_cm
 azimuth_raw
 elevation_raw
 reflectivity
-r g b
-ego_x ego_y ego_z ego_yaw
+RGB
+ego_x
+ego_y
+ego_z
+ego_yaw
+
 ```
 
 ---
 
-# Final Inference Pipeline (Recommended)
+# 8. Training the Neural Model (Optional)
 
-The **V5 heuristic detector** is the recommended final solution.
-
-It is robust to density drops and performs best on **Cable detection**.
-
-Run inference on a single scene:
-
-```bash
-python inference/train_and_infer_baseline_v5.py \
---file airbus_hackathon_trainingdata/scene_1.h5 \
---output-csv scene_1_predictions_v5.csv \
---num-workers 8
-```
-
-Simulate sparse LiDAR:
-
-```bash
-python inference/train_and_infer_baseline_v5.py \
---file airbus_hackathon_trainingdata/scene_1.h5 \
---output-csv scene_1_predictions_v5_50.csv \
---point-fraction 0.5 \
---num-workers 8
-```
-
-Diagnostics:
+## Dataset Export
 
 ```
---diagnostics-json scene_1_diag.json
+
+python training/export_dataset_for_segmentation.py 
+--input-dir airbus_hackathon_trainingdata 
+--output-dir seg_dataset 
+--max-points 50000 
+--voxel-size 0.15
+
+```
+
+## Train the model
+
+```
+
+python training/train_small_point_model.py 
+--dataset-dir seg_dataset 
+--output-dir small_model_runs/run1 
+--epochs 12 
+--batch-size 4
+
+```
+
+Output:
+
+```
+
+small_model_runs/run1/best_model.pt
+
 ```
 
 ---
 
-# Batch Robustness Evaluation
+# 9. Batch Robustness Evaluation
 
-Run the detector on the full training set and simulate density variations.
+Evaluate detector robustness across LiDAR densities.
 
 ```
-python training/batch_evaluate_train.py \
---input-dir airbus_hackathon_trainingdata \
---detector-script inference/train_and_infer_baseline_v5.py \
+
+python training/batch_evaluate_train.py 
+--input-dir airbus_hackathon_trainingdata 
+--detector-script inference/train_and_infer_baseline_v5.py 
 --output-dir batch_eval_train_v5
-```
-
-Inspect summary results:
 
 ```
+
+Inspect results:
+
+```
+
 head batch_eval_train_v5/density_summary.csv
 head batch_eval_train_v5/density_class_summary.csv
+
 ```
 
-These files summarize detection counts across densities:
+Example:
 
-| density | detections     |
-| ------- | -------------- |
-| 100%    | baseline       |
-| 75%     | robustness     |
-| 50%     | sparse LiDAR   |
-| 25%     | extreme sparse |
+| Density | Detections |
+|-------|--------|
+|100%|4609|
+|75%|4042|
+|50%|3244|
+|25%|2029|
 
 ---
 
-# Visualization
+# 10. Inference (Final Detector)
 
-Visualize predictions with Open3D.
+The **V5 heuristic detector** is recommended for final predictions.
 
-List available poses:
-
-```bash
-python visualization/visualize_predictions_v2.py \
---file airbus_hackathon_trainingdata/scene_1.h5 \
---pred-csv scene_1_predictions_v6.csv
 ```
 
-Visualize a specific frame:
+python inference/train_and_infer_baseline_v5.py 
+--file airbus_hackathon_trainingdata/scene_1.h5 
+--output-csv scene_1_predictions_v5.csv 
+--num-workers 8
 
-```bash
-python visualization/visualize_predictions_v2.py \
---file airbus_hackathon_trainingdata/scene_1.h5 \
---pred-csv scene_1_predictions_v6.csv \
+```
+
+Sparse simulation:
+
+```
+
+python inference/train_and_infer_baseline_v5.py 
+--file airbus_hackathon_trainingdata/scene_1.h5 
+--output-csv scene_1_predictions_v5_50.csv 
+--point-fraction 0.5
+
+```
+
+---
+
+# 11. Visualization
+
+Visualize predictions:
+
+```
+
+python visualization/visualize_predictions_v2.py 
+--file airbus_hackathon_trainingdata/scene_1.h5 
+--pred-csv scene_1_predictions_v6.csv 
 --pose-index 0
+
 ```
 
-Save screenshot:
+Generate screenshot:
 
-```bash
-python visualization/visualize_predictions_v2.py \
---file airbus_hackathon_trainingdata/scene_1.h5 \
---pred-csv scene_1_predictions_v6.csv \
---pose-index 0 \
+```
+
+python visualization/visualize_predictions_v2.py 
+--file airbus_hackathon_trainingdata/scene_1.h5 
+--pred-csv scene_1_predictions_v6.csv 
+--pose-index 0 
 --screenshot screenshots/frame_01.png
+
 ```
 
 On headless servers:
 
-```bash
+```
+
 xvfb-run -s "-screen 0 1280x720x24" python visualization/visualize_predictions_v2.py ...
+
 ```
 
 ---
 
-# Screenshot Generation (Airbus Requirement)
+# 12. Screenshots
 
-Airbus requires **max 10 screenshots** showing:
-
-• point cloud
-• predicted bounding boxes
-• colored classes
+Airbus requires **≤10 visualization images**.
 
 Recommended distribution:
 
-| type         | count |
-| ------------ | ----- |
-| Cable frames | 3     |
-| Wind Turbine | 3     |
-| Antenna      | 2     |
-| Mixed scene  | 2     |
-
-Total ≤ 10.
-
-Use **V6 predictions** for screenshots since they show more visible objects.
+| Object Type | Images |
+|-------------|-------|
+Cable | 3
+Wind Turbine | 3
+Antenna | 2
+Mixed scene | 2
 
 ---
 
-# Optional: Segmentation Model Training
+# 13. Final Submission Generation
 
-Export dataset:
-
-```
-python training/export_dataset_for_segmentation.py \
---input-dir airbus_hackathon_trainingdata \
---output-dir seg_dataset \
---max-points 50000
-```
-
-Train model:
+For each evaluation scene:
 
 ```
-python training/train_small_point_model.py \
---dataset-dir seg_dataset \
---output-dir small_model_runs/run1 \
---epochs 12 \
---batch-size 4
-```
 
-Model output:
+python inference/train_and_infer_baseline_v5.py 
+--file sceneA_100.h5 
+--output-csv sceneA_100.csv
 
 ```
-small_model_runs/run1/best_model.pt
-```
 
----
-
-# Optional: Model Evaluation
-
-Proxy evaluation against pseudo labels.
+Generate:
 
 ```
-python training/evaluate_map_proxy.py \
---model small_model_runs/run1/best_model.pt \
---input-dir airbus_hackathon_trainingdata \
---output-dir proxy_eval_run1
-```
 
-This is **not the official Airbus metric**, but useful for development.
-
----
-
-# Final Submission Generation
-
-When Airbus provides evaluation scenes, run:
-
-```
-python inference/train_and_infer_baseline_v5.py \
---file <EVAL_FILE.h5> \
---output-csv <OUTPUT_FILE.csv> \
---num-workers 8
-```
-
-Expected final outputs:
-
-```
 sceneA_100.csv
 sceneA_75.csv
 sceneA_50.csv
@@ -312,15 +376,15 @@ sceneB_100.csv
 sceneB_75.csv
 sceneB_50.csv
 sceneB_25.csv
+
 ```
 
 ---
 
-# Required CSV Format
-
-Each CSV must contain exactly:
+# 14. Output CSV Format
 
 ```
+
 ego_x
 ego_y
 ego_z
@@ -334,61 +398,43 @@ bbox_height
 bbox_yaw
 class_ID
 class_label
-```
-
----
-
-# Final Submission Checklist
-
-Before submitting ensure you include:
-
-### Required
-
-* README.md
-* requirements.txt
-* inference code
-* model file
-* 8 prediction CSVs
-* ≤ 10 screenshots
-
-### Recommended
-
-* technical_summary.docx
-* one_page.pdf
-* batch evaluation results
-* example predictions
-
----
-
-# Method Summary
-
-The pipeline combines:
-
-1. **Geometric clustering**
-2. **PCA line detection**
-3. **class-specific heuristics**
-4. **optional neural segmentation**
-
-Advantages:
-
-* robust to sparse LiDAR
-* interpretable
-* efficient
-* small model size
-
-This approach performs particularly well on **Cable detection**, the most difficult class in the dataset.
-
----
-
-# License
-
-Provided for research and competition use.
 
 ```
 
 ---
 
-# requirements.txt
+# 15. Key Insights
+
+The most difficult class is **Cable**.
+
+Deep neural networks struggle due to:
+
+- extreme sparsity
+- thin geometry
+- long structures
+
+The geometric approach:
+
+- uses PCA line fitting
+- merges aligned clusters
+- is robust to LiDAR sparsity
+
+This results in significantly more stable cable detection.
+
+---
+
+# 16. Advantages of the Approach
+
+| Feature | Benefit |
+|------|------|
+Geometry-first | Robust to sparse LiDAR |
+Explainable pipeline | Easy debugging |
+Low compute | CPU-friendly |
+Hybrid ML | Future improvement possible |
+
+---
+
+# 17. Requirements
 
 ```
 
@@ -402,4 +448,13 @@ tqdm
 open3d
 matplotlib
 
+```
+
+---
+
+# 18. License
+
+Provided for research and competition use.
+
+---
 ```
