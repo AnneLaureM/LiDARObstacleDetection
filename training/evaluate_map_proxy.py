@@ -3,11 +3,11 @@
 import argparse
 import json
 from pathlib import Path
-
+from inference.infer_small_point_model import infer_file, load_model
 import pandas as pd
 import torch
 
-from infer_small_point_model import infer_file, load_model
+from Hackathon.LiDARObstacleDetection.inference.infer_small_point_model import infer_file, load_model
 
 
 def parse_args():

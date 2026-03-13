@@ -213,10 +213,10 @@ ego_yaw
 
 ```
 
-python training/export_dataset_for_segmentation.py 
---input-dir airbus_hackathon_trainingdata 
---output-dir seg_dataset 
---max-points 50000 
+python training/export_dataset_for_segmentation.py \
+--input-dir airbus_hackathon_trainingdata \
+--output-dir seg_dataset \
+--max-points 50000 \
 --voxel-size 0.15
 
 ```
@@ -225,10 +225,10 @@ python training/export_dataset_for_segmentation.py
 
 ```
 
-python training/train_small_point_model.py 
---dataset-dir seg_dataset 
---output-dir small_model_runs/run1 
---epochs 12 
+python training/train_small_point_model.py \
+--dataset-dir seg_dataset \
+--output-dir small_model_runs/run1 \ 
+--epochs 12 \
 --batch-size 4
 
 ```
@@ -249,10 +249,10 @@ Evaluate detector robustness across LiDAR densities.
 
 ```
 
-python training/batch_evaluate_train.py 
---input-dir airbus_hackathon_trainingdata 
---detector-script inference/train_and_infer_baseline_v5.py 
---output-dir batch_eval_train_v5
+python training/batch_evaluate_train.py \
+--input-dir airbus_hackathon_trainingdata \
+--detector-script inference/train_and_infer_baseline_v5.py \ 
+--output-dir batch_eval_train_v5 \
 
 ```
 
@@ -282,9 +282,9 @@ The **V5 heuristic detector** is recommended for final predictions.
 
 ```
 
-python inference/train_and_infer_baseline_v5.py 
---file airbus_hackathon_trainingdata/scene_1.h5 
---output-csv scene_1_predictions_v5.csv 
+python inference/train_and_infer_baseline_v5.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--output-csv scene_1_predictions_v5.csv \
 --num-workers 8
 
 ```
@@ -293,9 +293,9 @@ Sparse simulation:
 
 ```
 
-python inference/train_and_infer_baseline_v5.py 
---file airbus_hackathon_trainingdata/scene_1.h5 
---output-csv scene_1_predictions_v5_50.csv 
+python inference/train_and_infer_baseline_v5.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--output-csv scene_1_predictions_v5_50.csv \
 --point-fraction 0.5
 
 ```
