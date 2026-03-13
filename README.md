@@ -1,19 +1,3 @@
-Below is a **complete production-ready README.md** and a **matching requirements.txt** for the repository structure we discussed.
-It includes:
-
-* full pipeline commands
-* training + heuristic detector
-* evaluation
-* visualization
-* screenshot generation
-* Airbus submission steps
-* repository structure
-* explanations of the design choices
-
-You can **copy this directly as `README.md`** in your repo.
-
----
-
 # README.md
 
 ```markdown
