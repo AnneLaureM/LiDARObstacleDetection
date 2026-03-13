@@ -1,117 +1,117 @@
-# Airbus LiDAR Obstacle Detection – Final Submission README
+Below is a **complete production-ready README.md** and a **matching requirements.txt** for the repository structure we discussed.
+It includes:
 
-## 1. Overview
+* full pipeline commands
+* training + heuristic detector
+* evaluation
+* visualization
+* screenshot generation
+* Airbus submission steps
+* repository structure
+* explanations of the design choices
 
-This repository implements a **hybrid LiDAR obstacle detection pipeline** for the Airbus challenge.
-
-The target classes are:
-
-- `Antenna`
-- `Cable`
-- `Electric Pole`
-- `Wind Turbine`
-
-The final strategy used here is:
-
-- **v5 heuristic detector for final CSV submission**
-- **v6 detector for screenshots / qualitative visualization**
-- **small point model for experiments only**
-- **proxy evaluation for internal comparison only**
-
-This choice is deliberate:
-
-- `v5` is the most robust on **Cable**, which is the hardest and most important class in this challenge.
-- `v6` gives better visual coverage of **Antenna** and **Wind Turbine**, so it is useful for screenshots and demos.
-- the lightweight neural model is useful for research and validation, but in the current state it is not the recommended final submission path.
+You can **copy this directly as `README.md`** in your repo.
 
 ---
 
-## 2. Challenge constraints
+# README.md
 
-Airbus expects a final package including:
+```markdown
+# Airbus LiDAR Obstacle Detection
+Hybrid Geometry + Lightweight Learning Pipeline
 
-1. **8 CSV prediction files**
-   - 2 evaluation scenes
-   - each at 4 densities:
-     - `_100`
-     - `_75`
-     - `_50`
-     - `_25`
+## Overview
 
-2. **A model file**
-   - PyTorch (`.pt`, `.pth`) or ONNX
+This repository implements a **LiDAR obstacle detection system** designed for the Airbus AI Challenge.
 
-3. **Train and inference code**
+The goal is to detect aerial infrastructure obstacles from airborne LiDAR point clouds and output **3D bounding boxes** for the following classes:
 
-4. **requirements.txt**
+- Antenna
+- Cable
+- Electric Pole
+- Wind Turbine
 
-5. **A README**
+The solution combines:
 
-6. **Screenshots of max 10 frames**
-   - point cloud
-   - predicted 3D bounding boxes
-   - boxes colored by class
+• **Geometry-based object detection (primary approach)**  
+• **Lightweight neural point segmentation (experimental)**  
+• **Density robustness evaluation**  
+• **Visualization tools for qualitative analysis**
 
-7. **A short technical explanation / slide / one-pager**
+The final submission strategy is:
+
+| Component | Purpose |
+|--------|--------|
+| V5 heuristic detector | Final prediction CSVs |
+| V6 detector | Visual screenshots |
+| Small segmentation model | Experimental learning pipeline |
+| Proxy evaluation | Internal performance analysis |
+
+The geometry-first approach was chosen because:
+
+- the dataset is small
+- objects have strong geometric structure
+- cables are difficult for deep models but easy with geometric constraints
 
 ---
 
-## 3. Recommended repository structure
+# Repository Structure
 
-```text
+```
+
 airbus_lidar_solution/
 ├── README.md
 ├── requirements.txt
+├── lidar_utils.py
 ├── models/
-│   └── best_model.pt
+│ └── best_model.pt
 ├── training/
-│   ├── export_dataset_for_segmentation.py
-│   ├── train_small_point_model.py
-│   └── evaluate_map_proxy.py
+│ ├── export_dataset_for_segmentation.py
+│ ├── train_small_point_model.py
+│ ├── evaluate_map_proxy.py
+│ └── batch_evaluate_train.py
 ├── inference/
-│   ├── train_and_infer_baseline_v5.py
-│   ├── train_and_infer_baseline_v6.py
-│   └── infer_small_point_model.py
+│ ├── train_and_infer_baseline_v5.py
+│ ├── train_and_infer_baseline_v6.py
+│ └── infer_small_point_model.py
 ├── visualization/
-│   └── visualize_predictions_v2.py
+│ └── visualize_predictions_v2.py
+├── predictions/
+│ ├── sceneA_100.csv
+│ ├── sceneA_75.csv
+│ ├── sceneA_50.csv
+│ ├── sceneA_25.csv
+│ ├── sceneB_100.csv
+│ ├── sceneB_75.csv
+│ ├── sceneB_50.csv
+│ └── sceneB_25.csv
 ├── screenshots/
-│   ├── frame_01.png
-│   ├── ...
-│   └── frame_10.png
-└── examples/
-    └── scene_1_predictions.csv
-```
+│ ├── frame_01.png
+│ ├── ...
+│ └── frame_10.png
+└── docs/
+├── technical_summary.docx
+└── one_pager.pdf
+
+````
 
 ---
 
-## 4. Environment setup
+# Installation
 
-Create / activate your environment, then install dependencies:
+Create a Python environment and install dependencies.
 
 ```bash
 pip install -r requirements.txt
-```
-
-A minimal `requirements.txt` is:
-
-```text
-numpy
-pandas
-h5py
-scikit-learn
-torch
-tqdm
-open3d
-matplotlib
-```
+````
 
 ---
 
-## 5. Dataset layout
+# Dataset Layout
 
-Expected training data layout:
+The training dataset must follow this structure:
 
-```text
+```
 airbus_hackathon_trainingdata/
 ├── scene_1.h5
 ├── scene_2.h5
@@ -125,245 +125,201 @@ airbus_hackathon_trainingdata/
 └── scene_10.h5
 ```
 
-Toolkit files expected next to the scripts:
+Each file contains LiDAR points with:
 
-```text
-lidar_utils.py
-visualize.py
-README.md
-requirements.txt
+```
+distance_cm
+azimuth_raw
+elevation_raw
+reflectivity
+r g b
+ego_x ego_y ego_z ego_yaw
 ```
 
 ---
 
-## 6. Recommended final submission path
+# Final Inference Pipeline (Recommended)
 
-### Final detector to use for submission
+The **V5 heuristic detector** is the recommended final solution.
 
-Use:
+It is robust to density drops and performs best on **Cable detection**.
 
-```text
-train_and_infer_baseline_v5.py
-```
-
-Reason:
-
-- best Cable behavior
-- robust across density drops
-- stable on the full train batch evaluation
-
-### Detector to use for screenshots only
-
-Use:
-
-```text
-train_and_infer_baseline_v6.py
-```
-
-Reason:
-
-- better qualitative visibility for Antenna / Wind Turbine
-- more visually convincing screenshots
-
----
-
-## 7. Run the final heuristic detector on one file
-
-### v5 – recommended final detector
+Run inference on a single scene:
 
 ```bash
-python train_and_infer_baseline_v5.py   --file airbus_hackathon_trainingdata/scene_1.h5   --output-csv scene_1_predictions_v5.csv   --num-workers 8
+python inference/train_and_infer_baseline_v5.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--output-csv scene_1_predictions_v5.csv \
+--num-workers 8
 ```
 
-### v6 – recommended for screenshots / demos
+Simulate sparse LiDAR:
 
 ```bash
-python train_and_infer_baseline_v6.py   --file airbus_hackathon_trainingdata/scene_1.h5   --output-csv scene_1_predictions_v6.csv   --num-workers 8
+python inference/train_and_infer_baseline_v5.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--output-csv scene_1_predictions_v5_50.csv \
+--point-fraction 0.5 \
+--num-workers 8
 ```
 
-### Reduced density test
+Diagnostics:
 
-```bash
-python train_and_infer_baseline_v5.py   --file airbus_hackathon_trainingdata/scene_1.h5   --output-csv scene_1_predictions_v5_50.csv   --num-workers 8   --point-fraction 0.5   --diagnostics-json scene_1_diag_50.json
+```
+--diagnostics-json scene_1_diag.json
 ```
 
 ---
 
-## 8. Full train-batch robustness evaluation
+# Batch Robustness Evaluation
 
-Run the heuristic detector over the whole training set and simulate multiple densities.
+Run the detector on the full training set and simulate density variations.
 
-### v5 batch evaluation
-
-```bash
-python batch_evaluate_train.py   --input-dir airbus_hackathon_trainingdata   --detector-script train_and_infer_baseline_v5.py   --output-dir batch_eval_train_v5
+```
+python training/batch_evaluate_train.py \
+--input-dir airbus_hackathon_trainingdata \
+--detector-script inference/train_and_infer_baseline_v5.py \
+--output-dir batch_eval_train_v5
 ```
 
-### v6 batch evaluation
+Inspect summary results:
 
-```bash
-python batch_evaluate_train.py   --input-dir airbus_hackathon_trainingdata   --detector-script train_and_infer_baseline_v6.py   --output-dir batch_eval_train_v6
+```
+head batch_eval_train_v5/density_summary.csv
+head batch_eval_train_v5/density_class_summary.csv
 ```
 
-### Inspect the summaries
+These files summarize detection counts across densities:
 
-```bash
-head -20 batch_eval_train_v5/density_summary.csv
-head -20 batch_eval_train_v5/density_class_summary.csv
-
-head -20 batch_eval_train_v6/density_summary.csv
-head -20 batch_eval_train_v6/density_class_summary.csv
-```
-
-### Interpretation
-
-Use these files to decide which detector is stronger:
-
-- `density_summary.csv`: total detections vs density
-- `density_class_summary.csv`: detections per class vs density
-
-Recommended final choice here:
-
-- **submit v5**
-- **use v6 only for screenshots**
+| density | detections     |
+| ------- | -------------- |
+| 100%    | baseline       |
+| 75%     | robustness     |
+| 50%     | sparse LiDAR   |
+| 25%     | extreme sparse |
 
 ---
 
-## 9. Export the segmentation dataset (optional experiment path)
+# Visualization
 
-This step prepares a point-wise segmentation dataset for the small neural model.
+Visualize predictions with Open3D.
 
-```bash
-python export_dataset_for_segmentation.py   --input-dir airbus_hackathon_trainingdata   --output-dir seg_dataset   --max-points 50000   --voxel-size 0.15
-```
-
-Expected output:
-
-```text
-seg_dataset/
-├── train/
-├── val/
-└── dataset_metadata.json
-```
-
----
-
-## 10. Train the small point model (optional experiment path)
+List available poses:
 
 ```bash
-python train_small_point_model.py   --dataset-dir seg_dataset   --output-dir small_model_runs/run1   --epochs 12   --batch-size 4   --num-workers 4
+python visualization/visualize_predictions_v2.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--pred-csv scene_1_predictions_v6.csv
 ```
 
-Expected output:
-
-```text
-small_model_runs/run1/
-├── best_model.pt
-├── last_model.pt
-└── training_summary.json
-```
-
-Check the summary:
+Visualize a specific frame:
 
 ```bash
-cat small_model_runs/run1/training_summary.json
+python visualization/visualize_predictions_v2.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--pred-csv scene_1_predictions_v6.csv \
+--pose-index 0
+```
+
+Save screenshot:
+
+```bash
+python visualization/visualize_predictions_v2.py \
+--file airbus_hackathon_trainingdata/scene_1.h5 \
+--pred-csv scene_1_predictions_v6.csv \
+--pose-index 0 \
+--screenshot screenshots/frame_01.png
+```
+
+On headless servers:
+
+```bash
+xvfb-run -s "-screen 0 1280x720x24" python visualization/visualize_predictions_v2.py ...
 ```
 
 ---
 
-## 11. Run model inference (optional experiment path)
+# Screenshot Generation (Airbus Requirement)
 
-```bash
-python infer_small_point_model.py   --model small_model_runs/run1/best_model.pt   --file airbus_hackathon_trainingdata/scene_1.h5   --output-csv scene_1_model_predictions.csv
+Airbus requires **max 10 screenshots** showing:
+
+• point cloud
+• predicted bounding boxes
+• colored classes
+
+Recommended distribution:
+
+| type         | count |
+| ------------ | ----- |
+| Cable frames | 3     |
+| Wind Turbine | 3     |
+| Antenna      | 2     |
+| Mixed scene  | 2     |
+
+Total ≤ 10.
+
+Use **V6 predictions** for screenshots since they show more visible objects.
+
+---
+
+# Optional: Segmentation Model Training
+
+Export dataset:
+
+```
+python training/export_dataset_for_segmentation.py \
+--input-dir airbus_hackathon_trainingdata \
+--output-dir seg_dataset \
+--max-points 50000
+```
+
+Train model:
+
+```
+python training/train_small_point_model.py \
+--dataset-dir seg_dataset \
+--output-dir small_model_runs/run1 \
+--epochs 12 \
+--batch-size 4
+```
+
+Model output:
+
+```
+small_model_runs/run1/best_model.pt
 ```
 
 ---
 
-## 12. Proxy evaluation of the model (optional experiment path)
+# Optional: Model Evaluation
 
-This is **internal validation only**. It is not the Airbus official evaluation, but it is useful for development.
+Proxy evaluation against pseudo labels.
 
-```bash
-python evaluate_map_proxy.py   --model small_model_runs/run1/best_model.pt   --input-dir airbus_hackathon_trainingdata   --output-dir proxy_eval_run1
+```
+python training/evaluate_map_proxy.py \
+--model small_model_runs/run1/best_model.pt \
+--input-dir airbus_hackathon_trainingdata \
+--output-dir proxy_eval_run1
 ```
 
-Inspect outputs:
-
-```bash
-cat proxy_eval_run1/summary.json
-head -30 proxy_eval_run1/all_predictions.csv
-```
-
-Recommendation:
-
-- keep this script for internal experiments
-- do **not** rely on it as the official challenge metric
-- do **not** use the current model alone as the final submission path
+This is **not the official Airbus metric**, but useful for development.
 
 ---
 
-## 13. Generate screenshots for Airbus
+# Final Submission Generation
 
-Airbus asks for **max 10 screenshots** showing:
+When Airbus provides evaluation scenes, run:
 
-- the point cloud
-- predicted 3D bounding boxes
-- bounding boxes colored by class
-
-### List available poses in a scene
-
-```bash
-python visualize_predictions_v2.py   --file airbus_hackathon_trainingdata/scene_1.h5   --pred-csv scene_1_predictions_v6.csv
+```
+python inference/train_and_infer_baseline_v5.py \
+--file <EVAL_FILE.h5> \
+--output-csv <OUTPUT_FILE.csv> \
+--num-workers 8
 ```
 
-### Visualize one pose
+Expected final outputs:
 
-```bash
-python visualize_predictions_v2.py   --file airbus_hackathon_trainingdata/scene_1.h5   --pred-csv scene_1_predictions_v6.csv   --pose-index 0
 ```
-
-### Save one screenshot
-
-```bash
-python visualize_predictions_v2.py   --file airbus_hackathon_trainingdata/scene_1.h5   --pred-csv scene_1_predictions_v6.csv   --pose-index 0   --screenshot screenshots/scene1_pose0.png
-```
-
-### On a headless server
-
-```bash
-xvfb-run -s "-screen 0 1280x720x24" python visualize_predictions_v2.py   --file airbus_hackathon_trainingdata/scene_1.h5   --pred-csv scene_1_predictions_v6.csv   --pose-index 0   --screenshot screenshots/scene1_pose0.png
-```
-
-### Suggested screenshot selection
-
-Produce **10 screenshots max** total:
-
-- 3 frames with clear **Cable**
-- 3 frames with clear **Wind Turbine**
-- 2 frames with **Antenna**
-- 2 mixed frames
-
-Recommended:
-- use **v6 outputs** for screenshots
-- use multiple densities if possible (`100`, `50`, `25`) to show robustness
-
----
-
-## 14. Generate final evaluation CSVs for Airbus
-
-Once Airbus provides the 8 evaluation files, run the final detector on each file.
-
-### Recommended final inference command
-
-```bash
-python train_and_infer_baseline_v5.py   --file <EVAL_FILE.h5>   --output-csv <OUTPUT_FILE.csv>   --num-workers 8
-```
-
-### Expected final files
-
-You must produce something like:
-
-```text
 sceneA_100.csv
 sceneA_75.csv
 sceneA_50.csv
@@ -376,11 +332,11 @@ sceneB_25.csv
 
 ---
 
-## 15. Required CSV format
+# Required CSV Format
 
-Each prediction CSV must contain these columns exactly:
+Each CSV must contain exactly:
 
-```text
+```
 ego_x
 ego_y
 ego_z
@@ -398,86 +354,68 @@ class_label
 
 ---
 
-## 16. Final submission checklist
+# Final Submission Checklist
 
-Before zipping the repository, check that you have:
+Before submitting ensure you include:
 
 ### Required
-- [ ] `README.md`
-- [ ] `requirements.txt`
-- [ ] final inference script
-- [ ] training code
-- [ ] model file (`.pt`, `.pth`, or `.onnx`)
-- [ ] 8 CSV prediction files
-- [ ] max 10 screenshots
-- [ ] short technical summary / slide / PDF
+
+* README.md
+* requirements.txt
+* inference code
+* model file
+* 8 prediction CSVs
+* ≤ 10 screenshots
 
 ### Recommended
-- [ ] one-pager with method explanation
-- [ ] parameter count of the model
-- [ ] runtime notes
-- [ ] screenshots generated with `visualize_predictions_v2.py`
+
+* technical_summary.docx
+* one_page.pdf
+* batch evaluation results
+* example predictions
 
 ---
 
-## 17. Recommended final package content
+# Method Summary
 
-A good final submission zip could contain:
+The pipeline combines:
 
-```text
-submission/
-├── README.md
-├── requirements.txt
-├── inference/
-│   └── train_and_infer_baseline_v5.py
-├── training/
-│   ├── export_dataset_for_segmentation.py
-│   ├── train_small_point_model.py
-│   └── evaluate_map_proxy.py
-├── visualization/
-│   └── visualize_predictions_v2.py
-├── models/
-│   └── best_model.pt
-├── predictions/
-│   ├── sceneA_100.csv
-│   ├── sceneA_75.csv
-│   ├── sceneA_50.csv
-│   ├── sceneA_25.csv
-│   ├── sceneB_100.csv
-│   ├── sceneB_75.csv
-│   ├── sceneB_50.csv
-│   └── sceneB_25.csv
-├── screenshots/
-│   ├── frame_01.png
-│   ├── ...
-│   └── frame_10.png
-└── docs/
-    ├── technical_summary.docx
-    └── one_pager.pdf
+1. **Geometric clustering**
+2. **PCA line detection**
+3. **class-specific heuristics**
+4. **optional neural segmentation**
+
+Advantages:
+
+* robust to sparse LiDAR
+* interpretable
+* efficient
+* small model size
+
+This approach performs particularly well on **Cable detection**, the most difficult class in the dataset.
+
+---
+
+# License
+
+Provided for research and competition use.
+
 ```
 
 ---
 
-## 18. Final recommendation
+# requirements.txt
 
-### Use for final submission:
-- `train_and_infer_baseline_v5.py`
+```
 
-### Use for screenshots / qualitative visualization:
-- `train_and_infer_baseline_v6.py`
-- `visualize_predictions_v2.py`
+numpy
+pandas
+scipy
+scikit-learn
+h5py
+torch
+tqdm
+open3d
+matplotlib
 
-### Keep for internal experiments:
-- `export_dataset_for_segmentation.py`
-- `train_small_point_model.py`
-- `infer_small_point_model.py`
-- `evaluate_map_proxy.py`
-
-This hybrid workflow gave the best balance between:
-
-- Cable robustness
-- density robustness
-- low parameter count
-- engineering stability
-
-For this challenge, **the final practical choice is to submit the v5 heuristic detector** and keep the model path as supporting work.
+```
